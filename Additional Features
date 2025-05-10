@@ -1,0 +1,381 @@
+Let's continue by adding the following additional features to the **Job Connect Platform**:
+
+ **New Features to Add:**
+
+1. **Job Applications**: Job Seekers can apply for jobs.
+2. **Search and Filtering**: Job seekers can search and filter jobs based on title, location, and company.
+3. **Job Status**: Display job application statuses (e.g., Applied, Interview Scheduled, etc.).
+4. **Admin Dashboard**: Admin can view job applications.
+
+---
+
+**Step 6: Job Application Feature**
+
+ 1. **Backend - Create an Endpoint to Apply for Jobs**
+
+In the `server` directory, open `jobController.js` and add a new route to handle job applications.
+
+```js
+// jobController.js
+
+const Job = require("../models/jobModel");
+const Application = require("../models/applicationModel");
+
+const applyForJob = async (req, res) => {
+  const { jobId, userId, coverLetter } = req.body;
+
+  try {
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    const application = new Application({
+      job: jobId,
+      user: userId,
+      coverLetter,
+      status: "Applied", // Default status
+    });
+
+    await application.save();
+    res.status(200).json({ message: "Application successful", application });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { applyForJob };
+```
+
+ 2. **Backend - Define the Application Model**
+
+In `models/applicationModel.js`, define the schema for job applications:
+
+```js
+// models/applicationModel.js
+const mongoose = require("mongoose");
+
+const applicationSchema = new mongoose.Schema(
+  {
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    coverLetter: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["Applied", "Interview Scheduled", "Hired", "Rejected"],
+      default: "Applied",
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Application", applicationSchema);
+```
+
+3. **Backend - Update Routes**
+
+In `routes/jobRoutes.js`, add the route to handle job applications:
+
+```js
+// routes/jobRoutes.js
+const express = require("express");
+const { applyForJob } = require("../controllers/jobController");
+const router = express.Router();
+
+router.post("/apply", applyForJob);  // POST route for applying to a job
+
+module.exports = router;
+```
+
+---
+
+**Step 7: Frontend - Applying for Jobs**
+
+1. **Create Apply Job Component** (`src/components/Job/ApplyJob.js`)
+
+This component will allow job seekers to apply for jobs:
+
+```js
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const ApplyJob = ({ jobId }) => {
+  const [coverLetter, setCoverLetter] = useState("");
+  const navigate = useNavigate();
+
+  const handleApply = async () => {
+    const token = localStorage.getItem("authToken");
+    const userId = localStorage.getItem("userId"); // Assuming userId is stored after login
+
+    try {
+      await axios.post(
+        "http://localhost:5000/api/jobs/apply",
+        { jobId, userId, coverLetter },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      navigate("/jobs");
+    } catch (error) {
+      console.error("Error applying for job", error);
+    }
+  };
+
+  return (
+    <div>
+      <textarea
+        placeholder="Cover Letter"
+        value={coverLetter}
+        onChange={(e) => setCoverLetter(e.target.value)}
+      ></textarea>
+      <button onClick={handleApply}>Apply</button>
+    </div>
+  );
+};
+
+export default ApplyJob;
+```
+
+2. **Update Job Listing Page** (`src/pages/JobListing.js`)
+
+Now, let's update the `JobListing` page to include the **Apply Job** button.
+
+```js
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import ApplyJob from "../components/Job/ApplyJob";
+
+const JobListing = () => {
+  const [jobs, setJobs] = useState([]);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/jobs");
+        setJobs(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  return (
+    <div>
+      <h2>Available Jobs</h2>
+      {jobs.map((job) => (
+        <div key={job._id}>
+          <h3>{job.title}</h3>
+          <p>{job.companyName}</p>
+          <p>{job.location}</p>
+          <p>{job.jobDescription}</p>
+          <ApplyJob jobId={job._id} />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default JobListing;
+```
+
+---
+
+**Step 8: Search and Filtering Feature**
+
+1. **Backend - Add Search and Filter to Job API**
+
+Update the `jobController.js` to support filtering by job title, location, and company name.
+
+```js
+const getJobs = async (req, res) => {
+  const { title, location, companyName } = req.query;
+
+  try {
+    const filter = {};
+    if (title) filter.title = { $regex: title, $options: "i" };
+    if (location) filter.location = { $regex: location, $options: "i" };
+    if (companyName) filter.companyName = { $regex: companyName, $options: "i" };
+
+    const jobs = await Job.find(filter);
+    res.status(200).json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+```
+
+#### 2. **Frontend - Create a Search Bar in `JobListing.js`**
+
+Now, we'll add the ability to search and filter jobs by title, location, and company name.
+
+```js
+const JobListing = () => {
+  const [jobs, setJobs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState({
+    title: "",
+    location: "",
+    companyName: "",
+  });
+
+  const handleSearchChange = (e) => {
+    setSearchTerm({
+      ...searchTerm,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSearch = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/jobs", {
+        params: searchTerm,
+      });
+      setJobs(data);
+    } catch (error) {
+      console.error("Error fetching jobs", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/jobs");
+        setJobs(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  return (
+    <div>
+      <h2>Available Jobs</h2>
+      <div>
+        <input
+          type="text"
+          name="title"
+          placeholder="Search by title"
+          value={searchTerm.title}
+          onChange={handleSearchChange}
+        />
+        <input
+          type="text"
+          name="location"
+          placeholder="Search by location"
+          value={searchTerm.location}
+          onChange={handleSearchChange}
+        />
+        <input
+          type="text"
+          name="companyName"
+          placeholder="Search by company"
+          value={searchTerm.companyName}
+          onChange={handleSearchChange}
+        />
+        <button onClick={handleSearch}>Search</button>
+      </div>
+      {jobs.map((job) => (
+        <div key={job._id}>
+          <h3>{job.title}</h3>
+          <p>{job.companyName}</p>
+          <p>{job.location}</p>
+          <p>{job.jobDescription}</p>
+          <ApplyJob jobId={job._id} />
+        </div>
+      ))}
+    </div>
+  );
+};
+```
+
+---
+
+**Step 9: Admin Dashboard for Viewing Job Applications**
+
+1. **Backend - Create Endpoint for Admin to View Job Applications**
+
+In `adminController.js`, create a function to list all job applications:
+
+```js
+const Application = require("../models/applicationModel");
+
+const getApplications = async (req, res) => {
+  try {
+    const applications = await Application.find()
+      .populate("job")
+      .populate("user")
+      .exec();
+    res.status(200).json(applications);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getApplications };
+```
+
+2. **Frontend - Admin Dashboard**
+
+Create a new page where the admin can view job applications:
+
+```js
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+const AdminDashboard = () => {
+  const [applications, setApplications] = useState([]);
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/admin/applications");
+        setApplications(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchApplications();
+  }, []);
+
+  return (
+    <div>
+      <h2>Admin Dashboard</h2>
+      {applications.map((app) => (
+        <div key={app._id}>
+          <p>Job Title: {app.job.title}</p>
+          <p>Applicant: {app.user.username}</p>
+          <p>Cover Letter: {app.coverLetter}</p>
+          <p>Status: {app.status}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default AdminDashboard;
+```
+
+---
+
+**Step 10: Final Testing and Deployment**
+
+* Test all the features locally, including job listing, application, filtering, and admin dashboard.
+* After confirming everything works, deploy the backend to a platform like **Heroku** and the frontend to **Vercel** or **Netlify**.
+
+---
+
+This completes the added features for **Job Applications**, **Search/Filter**, and **Admin Dashboard**. Feel free to adjust and extend the functionality as needed.
