@@ -1,0 +1,344 @@
+**Part 2: Frontend Development with React**
+
+Now let's move forward with setting up the **frontend** of the **Job Connect Platform** using **React.js**. We'll be using **Axios** for making HTTP requests to the backend, **React Router** for navigation, and **React Context API** for managing the state.
+
+---
+
+**Step 1: Setting Up the Frontend Environment**
+
+1. **Create a new React app**:
+   Open a terminal and navigate to the root of your project directory, then create a new React app:
+
+   ```bash
+   npx create-react-app client
+   cd client
+   ```
+
+2. **Install required dependencies**:
+   In the `client` folder, install the following dependencies:
+
+   ```bash
+   npm install axios react-router-dom react-toastify
+   ```
+
+---
+
+### **Step 2: Folder Structure and Initial Setup**
+
+1. **Create the following folder structure**:
+
+   ```bash
+   src/
+   ├── components/
+   │   ├── Auth/
+   │   ├── Job/
+   ├── context/
+   ├── pages/
+   ├── App.js
+   ├── index.js
+   ```
+
+2. **Set up React Router**:
+   In `src/App.js`, import and set up **React Router**:
+
+   ```js
+   import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+   import Home from "./pages/Home";
+   import Register from "./pages/Register";
+   import Login from "./pages/Login";
+   import JobListing from "./pages/JobListing";
+   import CreateJob from "./pages/CreateJob";
+
+   function App() {
+     return (
+       <Router>
+         <Routes>
+           <Route path="/" element={<Home />} />
+           <Route path="/register" element={<Register />} />
+           <Route path="/login" element={<Login />} />
+           <Route path="/jobs" element={<JobListing />} />
+           <Route path="/create-job" element={<CreateJob />} />
+         </Routes>
+       </Router>
+     );
+   }
+
+   export default App;
+   ```
+
+3. **Set up the Entry Point** in `src/index.js`:
+
+   ```js
+   import React from "react";
+   import ReactDOM from "react-dom";
+   import "./index.css";
+   import App from "./App";
+
+   ReactDOM.render(
+     <React.StrictMode>
+       <App />
+     </React.StrictMode>,
+     document.getElementById("root")
+   );
+   ```
+
+---
+ **Step 3: Creating the Authentication Pages**
+
+ 1. **Create Register Page** (`src/pages/Register.js`):
+
+In this file, users can register with their details (username, email, password, and role):
+
+```js
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const Register = () => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("job_seeker");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:5000/api/auth/register", {
+        username,
+        email,
+        password,
+        role,
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Register</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
+          <option value="job_seeker">Job Seeker</option>
+          <option value="recruiter">Recruiter</option>
+        </select>
+        <button type="submit">Register</button>
+      </form>
+    </div>
+  );
+};
+
+export default Register;
+```
+
+2. **Create Login Page** (`src/pages/Login.js`):
+
+Users will log in here, providing their email and password to get the **JWT token**:
+
+```js
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
+      localStorage.setItem("authToken", data.token); // Save token to localStorage
+      navigate("/jobs");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
+```
+
+---
+
+**Step 4: Creating Job Listing and Job Posting Pages**
+
+1. **Create Job Listing Page** (`src/pages/JobListing.js`):
+
+This page will display the list of available jobs, fetched from the backend:
+
+```js
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+const JobListing = () => {
+  const [jobs, setJobs] = useState([]);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/jobs");
+        setJobs(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  return (
+    <div>
+      <h2>Available Jobs</h2>
+      {jobs.map((job) => (
+        <div key={job._id}>
+          <h3>{job.title}</h3>
+          <p>{job.companyName}</p>
+          <p>{job.location}</p>
+          <p>{job.jobDescription}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default JobListing;
+```
+
+2. **Create Job Posting Page** (`src/pages/CreateJob.js`):
+
+Only **recruiters** can post jobs:
+
+```js
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const CreateJob = () => {
+  const [title, setTitle] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [location, setLocation] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("authToken");
+    try {
+      await axios.post(
+        "http://localhost:5000/api/jobs",
+        { title, companyName, location, jobDescription },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      navigate("/jobs");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Create Job</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Job Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Company Name"
+          value={companyName}
+          onChange={(e) => setCompanyName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Location"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
+        <textarea
+          placeholder="Job Description"
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+        />
+        <button type="submit">Post Job</button>
+      </form>
+    </div>
+  );
+};
+
+export default CreateJob;
+```
+
+---
+
+**Step 5: Running the Application**
+
+1. **Run the Backend**:
+   In the `server` directory, start the backend:
+
+   ```bash
+   npm run dev
+   ```
+
+2. **Run the Frontend**:
+   In the `client` directory, start the frontend:
+
+   ```bash
+   npm start
+   ```
+
+---
+
