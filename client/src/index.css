@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow duration-200;
+  }
+}
+
+@layer utilities {
+  /* Recruiter Profile Animations */
+  @keyframes recruiterGlow {
+    0%, 100% {
+      opacity: 0.75;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+  
+  @keyframes recruiterPulse {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+  
+  .recruiter-glow {
+    animation: recruiterGlow 2s ease-in-out infinite;
+  }
+  
+  .recruiter-pulse {
+    animation: recruiterPulse 1.5s ease-in-out infinite;
+  }
+  
+  .recruiter-badge-glow {
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+    animation: recruiterPulse 2s ease-in-out infinite;
+  }
+  
+  .recruiter-name {
+    background: linear-gradient(135deg, #f59e0b, #d97706, #92400e);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+  }
+  
+  .recruiter-profile:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .recruiter-profile:hover .recruiter-glow {
+    animation-duration: 1s;
+  }
+  
+  /* Custom scrollbar styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+  
+  /* Global scrollbar for body */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.400') theme('colors.gray.100');
+  }
+  
+  body::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  body::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded;
+  }
+  
+  body::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
