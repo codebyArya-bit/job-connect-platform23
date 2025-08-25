@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
   html {
@@ -24,21 +24,67 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    background-color: #2563eb;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background-color 200ms;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    background-color: #e5e7eb;
+    color: #1f2937;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: color 200ms, background-color 200ms;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.btn-secondary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #6b7280, 0 0 0 4px #fff;
+}
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    transition: colors 200ms;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: transparent;
+    box-shadow: 0 0 0 2px #3b82f6;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow duration-200;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    transition: box-shadow 200ms;
   }
-}
+  .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+
+  .btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px #fff;
+  }
+  .card:hover {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+/* Remove extra closing brace as it's causing a syntax error */
 
 @layer utilities {
   /* Recruiter Profile Animations */
@@ -98,15 +144,16 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    background-color: #f3f4f6;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 rounded;
+    background-color: #9ca3af;
+    border-radius: 0.25rem;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500;
+    background-color: #6B7280;
   }
   
   /* Global scrollbar for body */
@@ -120,14 +167,15 @@
   }
   
   body::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    background-color: #f3f4f6;
   }
   
   body::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 rounded;
+    background-color: #9ca3af;
+    border-radius: 0.25rem;
   }
   
   body::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500;
+    background-color: #6b7280;
   }
 }
