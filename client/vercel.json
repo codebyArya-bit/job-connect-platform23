@@ -20,6 +20,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://jobconnect-backend-57bp.onrender.com/api"
+    "VITE_API_URL": "/api"
   }
 }
