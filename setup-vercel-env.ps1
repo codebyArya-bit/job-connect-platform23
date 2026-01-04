@@ -5,15 +5,50 @@ Write-Host "🚀 JobConnect - Vercel Environment Setup" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Environment variables
+function Read-DotenvFile($filePath) {
+    $vars = @{}
+    if (-not (Test-Path $filePath)) {
+        return $vars
+    }
+
+    foreach ($rawLine in Get-Content $filePath) {
+        $line = $rawLine.Trim()
+        if (-not $line) { continue }
+        if ($line.StartsWith("#")) { continue }
+        $parts = $line.Split("=", 2)
+        if ($parts.Count -ne 2) { continue }
+        $key = $parts[0].Trim()
+        $value = $parts[1].Trim().Trim('"').Trim("'")
+        if ($key) {
+            $vars[$key] = $value
+        }
+    }
+    return $vars
+}
+
+$serverEnv = Read-DotenvFile (Join-Path $PSScriptRoot "server\.env")
+$clientEnv = Read-DotenvFile (Join-Path $PSScriptRoot "client\.env")
+
 $envVars = @{
-    "MONGODB_URI" = "mongodb+srv://aryabratmishra:jobsforarya2023@cluster0.mongodb.net/jobconnect?retryWrites=true&w=majority"
-    "JWT_SECRET" = "36718b6c5e943c88a46822b12f94b6b35ecc1514b24255181e7b57cf36d1eb0d072b7c80f7642c1e097f4659293abe22d8b97f68afadcf35560053c79d468ff7"
-    "JWT_EXPIRE" = "7d"
+    "MONGODB_URI" = $serverEnv["MONGODB_URI"]
+    "JWT_SECRET" = $serverEnv["JWT_SECRET"]
+    "JWT_EXPIRE" = $(if ($serverEnv["JWT_EXPIRE"]) { $serverEnv["JWT_EXPIRE"] } else { "7d" })
     "NODE_ENV" = "production"
-    "CLIENT_URL" = "https://jobcon-six.vercel.app"
-    "API_BASE_URL" = "https://jobcon-six.vercel.app/api"
-    "PORT" = "5000"
+    "CLIENT_URL" = $serverEnv["CLIENT_URL"]
+    "VITE_API_URL" = $(if ($clientEnv["VITE_API_URL"]) { $clientEnv["VITE_API_URL"] } else { "/api" })
+}
+
+$missing = @()
+foreach ($requiredKey in @("MONGODB_URI", "JWT_SECRET")) {
+    if (-not $envVars[$requiredKey]) {
+        $missing += $requiredKey
+    }
+}
+
+if ($missing.Count -gt 0) {
+    Write-Host "❌ Missing required variables: $($missing -join ', ')" -ForegroundColor Red
+    Write-Host "Add them to server/.env and re-run this script." -ForegroundColor Yellow
+    exit 1
 }
 
 # Check if Vercel CLI is installed
@@ -58,6 +93,10 @@ Write-Host "⚙️  Setting up environment variables..." -ForegroundColor Yellow
 foreach ($env in $envVars.GetEnumerator()) {
     $key = $env.Key
     $value = $env.Value
+
+    if (-not $value) {
+        continue
+    }
     
     Write-Host "Setting $key..." -ForegroundColor Cyan
     
@@ -92,7 +131,7 @@ Write-Host "📋 Manual Setup Instructions:" -ForegroundColor Cyan
 Write-Host "If the automated setup didn't work, please set these variables manually in Vercel Dashboard:" -ForegroundColor White
 Write-Host ""
 foreach ($env in $envVars.GetEnumerator()) {
-    Write-Host "$($env.Key) = $($env.Value)" -ForegroundColor Gray
+    Write-Host "$($env.Key)" -ForegroundColor Gray
 }
 
 # Trigger redeployment
@@ -117,12 +156,5 @@ Write-Host ""
 Write-Host "📋 Summary:" -ForegroundColor Cyan
 Write-Host "- Environment variables configured (or instructions provided)" -ForegroundColor White
 Write-Host "- Production deployment triggered" -ForegroundColor White
-Write-Host "- Your app should be live at: https://jobcon-six.vercel.app" -ForegroundColor White
 Write-Host ""
 Write-Host "⏰ Please wait 2-3 minutes for deployment to complete." -ForegroundColor Yellow
-
-# Optional: Open the deployment URL
-$openSite = Read-Host "Would you like to open the site in your browser? (y/n)"
-if ($openSite -eq 'y' -or $openSite -eq 'Y') {
-    Start-Process "https://jobcon-six.vercel.app"
-}

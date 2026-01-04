@@ -22,23 +22,18 @@ node setup-vercel-env.js
 
 1. **Install Vercel CLI** (if not already installed)
 2. **Authenticate with Vercel** (opens browser for login)
-3. **Set Environment Variables**:
-   - `MONGODB_URI` - MongoDB Atlas connection
-   - `JWT_SECRET` - Secure authentication token
-   - `JWT_EXPIRE` - Token expiration time
-   - `NODE_ENV` - Production environment
-   - `CLIENT_URL` - Frontend URL
-   - `API_BASE_URL` - Backend API URL
-   - `PORT` - Server port
-4. **Trigger Production Deployment**
-5. **Provide Status Updates**
+3. **Read local `.env` files**:
+   - `server/.env` for backend variables (`MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRE`, optional `CLIENT_URL`)
+   - `client/.env` for frontend variables (`VITE_API_URL`, defaults to `/api`)
+4. **Set Environment Variables** in Vercel
+5. **Trigger Production Deployment**
+6. **Provide Status Updates**
 
 ## 🎯 Expected Results
 
 After running the script:
 - ✅ All environment variables configured in Vercel
 - ✅ Production deployment triggered automatically
-- ✅ Application live at: https://jobcon-six.vercel.app
 - ✅ Full functionality: authentication, job management, database connection
 
 ## 🔍 Manual Verification
@@ -46,7 +41,7 @@ After running the script:
 If you prefer to verify manually:
 
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Select your `jobcon-six` project
+2. Select your project
 3. Navigate to **Settings** → **Environment Variables**
 4. Verify all variables are present
 5. Go to **Deployments** and trigger a redeploy if needed
@@ -64,7 +59,7 @@ If you prefer to verify manually:
 
 ### Environment Variables Not Set
 - Manually add them in Vercel Dashboard
-- Use the values from the `.env` file in this directory
+- Use the values from `server/.env` and `client/.env`
 
 ### Deployment Still Shows 404
 - Wait 2-3 minutes for deployment to complete

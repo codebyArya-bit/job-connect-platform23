@@ -7,18 +7,57 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
-// Environment variables configuration
-const envVars = {
-  MONGODB_URI: 'mongodb+srv://aryabratmishra:jobsforarya2023@cluster0.mongodb.net/jobconnect?retryWrites=true&w=majority',
-  JWT_SECRET: '36718b6c5e943c88a46822b12f94b6b35ecc1514b24255181e7b57cf36d1eb0d072b7c80f7642c1e097f4659293abe22d8b97f68afadcf35560053c79d468ff7',
-  JWT_EXPIRE: '7d',
-  NODE_ENV: 'production',
-  CLIENT_URL: 'https://jobcon-six.vercel.app',
-  API_BASE_URL: 'https://jobcon-six.vercel.app/api',
-  PORT: '5000'
+const parseDotenv = (content) => {
+  const result = {};
+  const lines = content.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const eqIndex = line.indexOf('=');
+    if (eqIndex === -1) continue;
+    const key = line.slice(0, eqIndex).trim();
+    let value = line.slice(eqIndex + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    result[key] = value;
+  }
+  return result;
 };
+
+const loadEnvFromFile = (filePath) => {
+  try {
+    if (!fs.existsSync(filePath)) return {};
+    const content = fs.readFileSync(filePath, 'utf8');
+    return parseDotenv(content);
+  } catch {
+    return {};
+  }
+};
+
+const serverEnv = loadEnvFromFile('server/.env');
+const clientEnv = loadEnvFromFile('client/.env');
+
+const envVars = {
+  MONGODB_URI: serverEnv.MONGODB_URI,
+  JWT_SECRET: serverEnv.JWT_SECRET,
+  JWT_EXPIRE: serverEnv.JWT_EXPIRE || '7d',
+  NODE_ENV: 'production',
+  CLIENT_URL: serverEnv.CLIENT_URL,
+  VITE_API_URL: clientEnv.VITE_API_URL || '/api',
+};
+
+const requiredKeys = ['MONGODB_URI', 'JWT_SECRET'];
+const missingRequired = requiredKeys.filter((k) => !envVars[k]);
+if (missingRequired.length) {
+  console.error(`❌ Missing required variables: ${missingRequired.join(', ')}`);
+  console.error('Add them to server/.env and re-run this script.');
+  process.exit(1);
+}
 
 console.log('🚀 JobConnect - Vercel Environment Setup');
 console.log('=====================================\n');
@@ -57,7 +96,7 @@ try {
 // Set environment variables
 console.log('\n⚙️  Setting up environment variables...');
 
-for (const [key, value] of Object.entries(envVars)) {
+for (const [key, value] of Object.entries(envVars).filter(([, v]) => v)) {
   try {
     console.log(`Setting ${key}...`);
     execSync(`vercel env add ${key} production`, {
@@ -97,5 +136,4 @@ console.log('\n🎉 Environment setup completed!');
 console.log('\n📋 Summary:');
 console.log('- All environment variables configured');
 console.log('- Production deployment triggered');
-console.log('- Your app should be live at: https://jobcon-six.vercel.app');
 console.log('\n⏰ Please wait 2-3 minutes for deployment to complete.');
