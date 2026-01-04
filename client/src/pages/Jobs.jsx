@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -6,8 +6,7 @@ import {
   MapPinIcon,
   CurrencyDollarIcon,
   ClockIcon,
-  BuildingOfficeIcon,
-  XCircleIcon
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 
 const Jobs = () => {
@@ -15,6 +14,12 @@ const Jobs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({
+    search: '',
+    location: '',
+    jobType: '',
+    salaryRange: ''
+  });
+  const [queryFilters, setQueryFilters] = useState({
     search: '',
     location: '',
     jobType: '',
@@ -35,7 +40,7 @@ const Jobs = () => {
     { label: '$150k+', value: '150000-999999' }
   ];
 
-  const fetchJobs = async (page = 1) => {
+  const fetchJobs = useCallback(async (page = 1, activeFilters = queryFilters) => {
     try {
       setLoading(true);
       setError('');
@@ -44,7 +49,7 @@ const Jobs = () => {
         page: page.toString(),
         limit: '10',
         ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
+          Object.entries(activeFilters).filter(([, value]) => value !== '')
         )
       });
 
@@ -76,11 +81,11 @@ const Jobs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [queryFilters]);
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [fetchJobs]);
 
   const handleFilterChange = (e) => {
     setFilters({
@@ -91,7 +96,7 @@ const Jobs = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchJobs(1);
+    setQueryFilters(filters);
   };
 
   const handlePageChange = (newPage) => {

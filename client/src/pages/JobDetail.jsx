@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,9 +6,7 @@ import ProfileAvatar from '../components/ProfileAvatar';
 import {
   MapPinIcon,
   CurrencyDollarIcon,
-  ClockIcon,
   BuildingOfficeIcon,
-  UserIcon,
   CalendarIcon,
   CheckCircleIcon,
   XCircleIcon
@@ -25,14 +23,7 @@ const JobDetail = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    fetchJob();
-    if (isAuthenticated) {
-      checkApplicationStatus();
-    }
-  }, [id, isAuthenticated]);
-
-  const fetchJob = async () => {
+  const fetchJob = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -64,18 +55,25 @@ const JobDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const checkApplicationStatus = async () => {
+  const checkApplicationStatus = useCallback(async () => {
     try {
       const response = await axios.get('/api/applications/my-applications');
-      const applications = response.data.data;
+      const applications = response.data.data || [];
       const applied = applications.some(app => app.job._id === id);
       setHasApplied(applied);
     } catch (err) {
       console.error('Error checking application status:', err);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchJob();
+    if (isAuthenticated) {
+      checkApplicationStatus();
+    }
+  }, [checkApplicationStatus, fetchJob, isAuthenticated]);
 
   const handleApply = async () => {
     if (!isAuthenticated) {
